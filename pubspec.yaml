@@ -33,10 +33,12 @@ dependencies:
   dio: ^5.7.0
   firebase_auth: ^5.2.0
   firebase_core: ^3.4.0
+  firebase_storage: ^12.2.0
   flutter:
     sdk: flutter
   fluttertoast: ^8.2.8
   http: ^1.2.2
+  image_picker: ^1.1.2
   provider: ^6.1.2
 
 dev_dependencies:

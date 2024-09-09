@@ -20,6 +20,7 @@ class PopCollect extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AppProvider()),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Pop Collect',
         theme: ThemeData(primarySwatch: Colors.blue),
         home: const LoginScreen(), //Inicia la app con la pantalla de login

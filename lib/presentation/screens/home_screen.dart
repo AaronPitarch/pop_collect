@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:pop_collect/presentation/screens/add_funko_screen.dart';
+import 'package:pop_collect/presentation/screens/funko_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
@@ -69,6 +71,14 @@ class HomeScreen extends StatelessWidget {
                   leading: const Icon(Icons.toys),
                   title: Text(funko['name'] ?? 'Nombre no disponible'),
                   subtitle: Text(funko['description'] ?? 'Sin descripcion'),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FunkoDetailScreen(funkoId: funkoDocs[index].id),
+                      ),
+                    );
+                  },
                 ),
               );
             },
@@ -76,7 +86,12 @@ class HomeScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _addFunko,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddFunkoScreen()),
+          );
+        },
         child: const Icon(Icons.add),
       ),
     );
