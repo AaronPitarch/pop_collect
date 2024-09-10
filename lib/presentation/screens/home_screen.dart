@@ -13,10 +13,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   String _searchQuery = '';
+  bool _showFavoritesOnly = false;
 
   //Funcion cerrar sesion
   void _signOut(BuildContext context) async {
@@ -39,13 +38,23 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
+        actions: [
+          IconButton(
+            icon: Icon(_showFavoritesOnly ? Icons.star : Icons.star_border),
+            onPressed: () {
+              setState(() {
+                _showFavoritesOnly = !_showFavoritesOnly;
+              });
+            },
+          )
+        ],
       ),
       body: Column(
         children: [ 
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Buscar Funko',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.search),
@@ -79,21 +88,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
             
-                //Filtrar funkos
+                //Filtrar funkos segun busqueda y favoritos
                 final funkoDocs = snapshot.data!.docs.where((doc) {
                   final funkoName = doc['name'].toString().toLowerCase();
-                  return funkoName.contains(_searchQuery);
+                  final isFavorite = (doc.data() as Map<String, dynamic>)['isFavorite'] ?? false;
+                  return funkoName.contains(_searchQuery) && (!_showFavoritesOnly || isFavorite);
                 }).toList();
                 
                 return ListView.builder(
                   itemCount: funkoDocs.length,
                   itemBuilder: (context, index) {
+                    final doc = funkoDocs[index];
                     final funko = funkoDocs[index].data() as Map<String, dynamic>;
+                    final isFavorite = funko['isFavorite'] ?? false;
                     return Card(
                       child: ListTile(
                         leading: const Icon(Icons.toys),
                         title: Text(funko['name'] ?? 'Nombre no disponible'),
                         subtitle: Text(funko['description'] ?? 'Sin descripcion'),
+                        trailing: IconButton(
+                          icon: Icon(
+                            isFavorite ? Icons.star : Icons.star_border,
+                            color: isFavorite ? Colors.yellow : Colors.grey,
+                          ),
+                          onPressed: () {
+                            doc.reference.update({'isFavorite': !isFavorite});
+                          } 
+                        ),
                         onTap: () {
                           Navigator.push(
                             context,

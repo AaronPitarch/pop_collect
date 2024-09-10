@@ -62,6 +62,7 @@ class AddFunkoScreenState extends State<AddFunkoScreen> {
           'imageUrl': imageUrl,
           'userId': _auth.currentUser?.uid,
           'createdAt': Timestamp.now(),
+          'isFavorite': false,
         });
         if (mounted) {
           Navigator.pop(context);
