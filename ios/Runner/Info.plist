@@ -51,5 +51,10 @@
 	<string>Necesitamos acceso a la galería para añadir fotos de los Funkos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Necesitamos permiso para guardar las fotos en la galería.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+  		<string>http</string>
+  		<string>https</string>
+	</array>
 </dict>
 </plist>
