@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pop_collect/presentation/screens/add_funko_screen.dart';
-import 'package:pop_collect/presentation/screens/funko_detail_screen.dart';
+import 'package:pop_collect/presentation/screens/edit_funko_screen.dart';
+import 'package:pop_collect/presentation/screens/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,22 +18,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   bool _showFavoritesOnly = false;
 
-  //Funcion cerrar sesion
-  void _signOut(BuildContext context) async {
-    await _auth.signOut();
-    Navigator.pushReplacementNamed(context, '/login');
-  }
-
-  //Funcion para añadir un nuevo Funko
-  Future<void> _addFunko() async {
-    await _firestore.collection('funkos').add({
-      'name': 'Nuevo Funko',
-      'description': 'Descripcion del Funko',
-      'userId': _auth.currentUser?.uid,
-      'createAdt': Timestamp.now(),
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +25,16 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Home'),
         actions: [
           IconButton(
-            icon: Icon(_showFavoritesOnly ? Icons.star : Icons.star_border),
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(_showFavoritesOnly ? Icons.favorite : Icons.favorite_border),
             onPressed: () {
               setState(() {
                 _showFavoritesOnly = !_showFavoritesOnly;
@@ -99,27 +93,38 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemCount: funkoDocs.length,
                   itemBuilder: (context, index) {
                     final doc = funkoDocs[index];
-                    final funko = funkoDocs[index].data() as Map<String, dynamic>;
+                    final funko = doc.data() as Map<String, dynamic>;
                     final isFavorite = funko['isFavorite'] ?? false;
                     return Card(
                       child: ListTile(
                         leading: const Icon(Icons.toys),
                         title: Text(funko['name'] ?? 'Nombre no disponible'),
                         subtitle: Text(funko['description'] ?? 'Sin descripcion'),
-                        trailing: IconButton(
-                          icon: Icon(
-                            isFavorite ? Icons.star : Icons.star_border,
-                            color: isFavorite ? Colors.yellow : Colors.grey,
-                          ),
-                          onPressed: () {
-                            doc.reference.update({'isFavorite': !isFavorite});
-                          } 
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                isFavorite ? Icons.favorite : Icons.favorite_border,
+                                color: isFavorite ? Colors.red : Colors.grey,
+                              ),
+                              onPressed: () {
+                                doc.reference.update({'isFavorite': !isFavorite});
+                              } 
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () {
+                                _showDeleteConfirmation(context, doc.id);
+                              }
+                            ),
+                          ],
                         ),
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => FunkoDetailScreen(funkoId: funkoDocs[index].id),
+                              builder: (context) => EditFunkoScreen(funkoId: doc.id),
                             ),
                           );
                         },
@@ -132,15 +137,57 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      //Boton para añadir nuevos funkos
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddFunkoScreen()),
+            MaterialPageRoute(
+              builder: (context) => const AddFunkoScreen(),
+            ),
           );
         },
+        tooltip: 'Añadir funko',
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  //Metodo para mostrar un dialogo de confirmacion antes de eliminar
+  void _showDeleteConfirmation(BuildContext context, String funkoId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Funko'),
+        content: const Text('¿Estás seguro de eliminar este Funko?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              _deleteFunko(funkoId);
+              Navigator.of(context).pop();
+            },
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ]
+      )
+    );
+  }
+
+  //Metodo para eliminar un funko de Firestore
+  Future<void> _deleteFunko(String funkoId) async {
+    try {
+      await _firestore.collection('funkos').doc(funkoId).delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Funko eliminado correctamente')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al eliminar el funko: $e')),
+      );
+    }
   }
 }
